@@ -13,6 +13,7 @@ import com.paypal.bfs.test.bookingserv.dao.BookingRepository;
 import com.paypal.bfs.test.bookingserv.exception.BookingException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementSetter;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -25,6 +26,7 @@ public class BookingRepositoryImpl implements BookingRepository {
     static final String INSERT_QUERY = "insert into BOOKING (first_name, last_name, date_of_birth, checkin_datetime, checkout_datetime, total_price, deposit,line1, line2, city, city_state, zipcode) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     static final String UPDATE_QUERY = "update BOOKING set first_name = ? , last_name = ? ,date_of_birth = ?, checkin_datetime = ?, checkout_datetime = ?, total_price =? , deposit =?, line1 = ?, line2 = ?, city = ?, city_state = ?, zipcode = ? where id = ?";
     static final String SELECT_QUERY = "select * from BOOKING";
+    static final String SELECT_QUERY_BY_RECORD = "SELECT ID FROM BOOKING where  FIRST_NAME = ? and LAST_NAME = ? and DATE_OF_BIRTH = ? and CHECKIN_DATETIME = ? and CHECKOUT_DATETIME = ? and TOTAL_PRICE = ? and DEPOSIT = ? and LINE1 = ? and  LINE2 = ? and CITY = ? and CITY_STATE = ? and ZIPCODE = ?";
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -32,6 +34,28 @@ public class BookingRepositoryImpl implements BookingRepository {
     @Override
     public Booking save(Booking booking) throws BookingException {
         try {
+            int id;
+            try {
+                id = jdbcTemplate.queryForObject(
+                        SELECT_QUERY_BY_RECORD,
+                        new Object[] { booking.getFirstName(), booking.getLastName(),
+                                new java.sql.Date(booking.getDateOfBirth().getTime()),
+                                new java.sql.Timestamp(booking.getCheckinDatetime().getTime()),
+                                new java.sql.Timestamp(booking.getCheckoutDatetime().getTime()),
+                                booking.getTotalPrice(), booking.getDeposit(), booking.getAddress().getLine1(),
+                                booking.getAddress().getLine2() != null ? booking.getAddress().getLine2() : "",
+                                booking.getAddress().getCity(),
+                                booking.getAddress().getState(), booking.getAddress().getZipCode() },
+                        Integer.class);
+            } catch (DataAccessException ex) {
+                id = -1;
+            }
+
+            if (id != -1) {
+                booking.setId(id);
+                return booking;
+            }
+
             if (booking.getId() == null) {
                 KeyHolder keyHolder = new GeneratedKeyHolder();
                 jdbcTemplate.update(connection -> {
@@ -45,7 +69,7 @@ public class BookingRepositoryImpl implements BookingRepository {
                     ps.setBigDecimal(6, booking.getTotalPrice());
                     ps.setBigDecimal(7, booking.getDeposit());
                     ps.setString(8, booking.getAddress().getLine1());
-                    ps.setString(9, booking.getAddress().getLine2());
+                    ps.setString(9, booking.getAddress().getLine2() != null ? booking.getAddress().getLine2() : "");
                     ps.setString(10, booking.getAddress().getCity());
                     ps.setString(11, booking.getAddress().getState());
                     ps.setInt(12, booking.getAddress().getZipCode());
@@ -64,7 +88,7 @@ public class BookingRepositoryImpl implements BookingRepository {
                         ps.setBigDecimal(6, booking.getTotalPrice());
                         ps.setBigDecimal(7, booking.getDeposit());
                         ps.setString(8, booking.getAddress().getLine1());
-                        ps.setString(9, booking.getAddress().getLine2());
+                        ps.setString(9, booking.getAddress().getLine2() != null ? booking.getAddress().getLine2() : "");
                         ps.setString(10, booking.getAddress().getCity());
                         ps.setString(11, booking.getAddress().getState());
                         ps.setInt(12, booking.getAddress().getZipCode());
