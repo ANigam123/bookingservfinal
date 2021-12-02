@@ -1,0 +1,17 @@
+DROP TABLE IF EXISTS BOOKING;
+
+CREATE TABLE BOOKING (
+  id INT AUTO_INCREMENT  PRIMARY KEY,
+  first_name VARCHAR(255) NOT NULL,
+  last_name VARCHAR(255) NOT NULL,
+  date_of_birth DATE NOT NULL,
+  checkin_datetime TIMESTAMP NOT NULL,
+  checkout_datetime TIMESTAMP NOT NULL,
+  total_price NUMBER(17,3) NOT NULL,
+  deposit NUMBER(17,3) NOT NULL,
+  line1 VARCHAR(50) NOT NULL,
+  line2 VARCHAR(50) NULL,
+  city VARCHAR(50) NOT NULL,
+  city_state VARCHAR(50) NOT NULL,
+  zipcode INT NOT NULL
+);
